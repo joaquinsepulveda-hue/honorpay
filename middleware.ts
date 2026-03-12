@@ -7,7 +7,7 @@ const SKIP_PREFIXES = [
   "/_next/static",
   "/_next/image",
   "/favicon.ico",
-  "/api/auth",
+  "/api/",
 ];
 
 export async function middleware(request: NextRequest) {
