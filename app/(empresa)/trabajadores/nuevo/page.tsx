@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { ArrowLeft, Mail, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, CheckCircle, Loader2, Copy, Check, MessageCircle } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email("Email inválido"),
@@ -22,6 +21,8 @@ export default function InvitarTrabajadorPage() {
   const router = useRouter();
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -38,25 +39,68 @@ export default function InvitarTrabajadorPage() {
       return;
     }
     setSentEmail(data.email);
+    setInviteLink(json.link ?? null);
     setSent(true);
+  }
+
+  async function handleCopy() {
+    if (!inviteLink) return;
+    await navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleWhatsApp() {
+    if (!inviteLink) return;
+    const text = encodeURIComponent(
+      `Hola! Te invito a unirte a HonorPay para recibir tus pagos de forma simple. Ingresa con este link:\n\n${inviteLink}`
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
   }
 
   if (sent) {
     return (
-      <div className="max-w-lg mx-auto mt-16 text-center space-y-6">
-        <div className="flex flex-col items-center gap-3">
+      <div className="max-w-lg mx-auto mt-16 space-y-6">
+        <div className="flex flex-col items-center gap-3 text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
             <CheckCircle className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold">Invitación enviada</h2>
+          <h2 className="text-xl font-semibold">Invitación generada</h2>
           <p className="text-sm text-muted-foreground max-w-sm">
             Se envió un email a{" "}
-            <span className="font-medium text-foreground">{sentEmail}</span>{" "}
-            con el link para registrarse en HonorPay.
+            <span className="font-medium text-foreground">{sentEmail}</span>.
+            También puedes compartir el link directamente.
           </p>
         </div>
+
+        {inviteLink && (
+          <Card>
+            <CardContent className="pt-4 space-y-3">
+              <Label className="text-xs text-muted-foreground">Link de invitación</Label>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={inviteLink}
+                  className="text-xs font-mono h-9 bg-muted"
+                />
+                <Button variant="outline" size="sm" className="h-9 px-3 shrink-0" onClick={handleCopy}>
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full h-10 gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                onClick={handleWhatsApp}
+              >
+                <MessageCircle className="h-4 w-4" />
+                Enviar por WhatsApp
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="flex gap-3 justify-center">
-          <Button variant="outline" onClick={() => setSent(false)}>
+          <Button variant="outline" onClick={() => { setSent(false); setInviteLink(null); }}>
             Invitar otro
           </Button>
           <Button onClick={() => router.push("/trabajadores")}>
@@ -94,7 +138,7 @@ export default function InvitarTrabajadorPage() {
         <CardHeader>
           <CardTitle className="text-base">Enviar invitación por email</CardTitle>
           <CardDescription>
-            El trabajador recibirá un link para crear su cuenta e ingresar sus datos bancarios. Solo necesitas su correo.
+            Se genera un link único para que el trabajador cree su cuenta. También podrás copiarlo y enviarlo por WhatsApp.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -114,7 +158,7 @@ export default function InvitarTrabajadorPage() {
           <CardFooter>
             <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Enviar invitación
+              Generar invitación
             </Button>
           </CardFooter>
         </form>

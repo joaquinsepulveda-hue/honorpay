@@ -38,9 +38,18 @@ export async function POST(request: NextRequest) {
 
   // Always use production URL so the redirectTo is whitelisted in Supabase
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://honorpay.vercel.app";
-  const { error: inviteError } = await service.auth.admin.inviteUserByEmail(email, {
-    data: { role: "trabajador" },
-    redirectTo: `${appUrl}/api/auth/callback?next=/onboarding`,
+
+  // Try invite (new user). Falls back to magic link for existing users.
+  // generateLink returns the action_link so we can share it directly.
+  let actionLink: string | null = null;
+
+  const { data: inviteData, error: inviteError } = await service.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: {
+      data: { role: "trabajador" },
+      redirectTo: `${appUrl}/api/auth/callback?next=/onboarding`,
+    },
   });
 
   if (inviteError) {
@@ -52,17 +61,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: inviteError.message }, { status: 500 });
     }
 
-    // User already has an account — send a magic link so they can log in and join
-    const { error: linkError } = await service.auth.admin.generateLink({
+    // Existing user — generate a magic link that sends them to /worker
+    const { data: magicData, error: magicError } = await service.auth.admin.generateLink({
       type: "magiclink",
       email,
       options: { redirectTo: `${appUrl}/api/auth/callback?next=/worker` },
     });
 
-    if (linkError) {
-      return NextResponse.json({ error: linkError.message }, { status: 500 });
+    if (magicError) {
+      return NextResponse.json({ error: magicError.message }, { status: 500 });
     }
-    // Fall through to record the invitation below
+
+    actionLink = magicData.properties?.action_link ?? null;
+  } else {
+    actionLink = inviteData.properties?.action_link ?? null;
   }
 
   // Record the invitation
@@ -72,5 +84,5 @@ export async function POST(request: NextRequest) {
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, link: actionLink });
 }
