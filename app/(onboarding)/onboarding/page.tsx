@@ -45,27 +45,20 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
-
-      setOrgEmail(user.email ?? "");
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, full_name, email")
-        .eq("id", user.id)
-        .single();
+      const res = await fetch("/api/me");
+      if (!res.ok) { router.push("/login"); return; }
+      const { user, profile } = await res.json();
 
       if (profile) {
         setRole(profile.role);
         setOrgName(profile.full_name);
         setOrgEmail(profile.email);
       } else {
-        // Profile missing — create it from auth metadata
-        const meta = user.user_metadata;
-        const roleFromMeta = meta?.role ?? "empresa";
-        const nameFromMeta = meta?.full_name ?? user.email ?? "";
+        // Profile missing — create it from auth metadata then reload
+        const supabase = createClient();
+        const meta = user?.user_metadata ?? {};
+        const roleFromMeta = meta?.role ?? "trabajador";
+        const nameFromMeta = meta?.full_name ?? user?.email ?? "";
         await supabase.from("profiles").upsert({
           id: user.id,
           email: user.email ?? "",
@@ -75,6 +68,7 @@ export default function OnboardingPage() {
         });
         setRole(roleFromMeta);
         setOrgName(nameFromMeta);
+        setOrgEmail(user?.email ?? "");
       }
       setLoading(false);
     }
