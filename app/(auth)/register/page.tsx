@@ -25,6 +25,7 @@ type FormData = z.infer<typeof schema>;
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { role: "empresa" },
@@ -53,7 +54,6 @@ export default function RegisterPage() {
     }
 
     if (authData.user) {
-      // Create profile (upsert in case it already exists)
       await supabase.from("profiles").upsert({
         id: authData.user.id,
         email: data.email,
@@ -62,8 +62,12 @@ export default function RegisterPage() {
         onboarding_complete: false,
       });
 
-      router.push("/onboarding");
-      router.refresh();
+      if (authData.session) {
+        router.push("/onboarding");
+        router.refresh();
+      } else {
+        setEmailSent(true);
+      }
     }
   }
 
@@ -78,6 +82,11 @@ export default function RegisterPage() {
           {error && (
             <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
               {error}
+            </div>
+          )}
+          {emailSent && (
+            <div className="text-sm text-primary bg-primary/10 px-3 py-2 rounded-md">
+              Revisa tu email para confirmar tu cuenta y luego inicia sesión.
             </div>
           )}
 
