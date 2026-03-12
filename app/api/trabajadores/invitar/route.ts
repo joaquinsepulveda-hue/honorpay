@@ -44,10 +44,25 @@ export async function POST(request: NextRequest) {
   });
 
   if (inviteError) {
-    // If user already exists in auth, still create the invitation record
-    if (!inviteError.message.includes("already been registered")) {
+    const alreadyExists =
+      inviteError.message.toLowerCase().includes("already been registered") ||
+      inviteError.message.toLowerCase().includes("already registered");
+
+    if (!alreadyExists) {
       return NextResponse.json({ error: inviteError.message }, { status: 500 });
     }
+
+    // User already has an account — send a magic link so they can log in and join
+    const { error: linkError } = await service.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+      options: { redirectTo: `${appUrl}/api/auth/callback?next=/worker` },
+    });
+
+    if (linkError) {
+      return NextResponse.json({ error: linkError.message }, { status: 500 });
+    }
+    // Fall through to record the invitation below
   }
 
   // Record the invitation
