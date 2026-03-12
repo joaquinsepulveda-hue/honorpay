@@ -35,39 +35,42 @@ export default function RegisterPage() {
 
   async function onSubmit(data: FormData) {
     setError(null);
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          full_name: data.fullName,
-          role: data.role,
-        },
-      },
-    });
-
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
-
-    if (authData.user) {
-      await supabase.from("profiles").upsert({
-        id: authData.user.id,
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
-        full_name: data.fullName,
-        role: data.role,
-        onboarding_complete: false,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.fullName,
+            role: data.role,
+          },
+          emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/onboarding`,
+        },
       });
 
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+
+      // Supabase returns user: null silently when email already exists (enumeration protection)
+      if (!authData.user) {
+        setError("Este email ya tiene una cuenta. Intenta iniciar sesión.");
+        return;
+      }
+
+      // Profile is created automatically via DB trigger (handle_new_user)
       if (authData.session) {
         router.push("/onboarding");
         router.refresh();
       } else {
         setEmailSent(true);
       }
+    } catch (err) {
+      setError("Error inesperado. Intenta de nuevo.");
+      console.error(err);
     }
   }
 
