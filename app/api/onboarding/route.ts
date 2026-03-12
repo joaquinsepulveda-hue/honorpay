@@ -45,7 +45,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (role === "trabajador") {
-    const { rut, phone, bankName, bankAccountType, bankAccountNumber } = data;
+    const { rut, phone, bankName, bankAccountType, bankAccountNumber, password } = data;
+
+    // Set password so the worker can log in normally later
+    if (password) {
+      const { error: pwError } = await service.auth.admin.updateUserById(user.id, { password });
+      if (pwError) return NextResponse.json({ error: pwError.message }, { status: 500 });
+    }
 
     const { error } = await service
       .from("profiles")

@@ -25,6 +25,11 @@ const trabajadorSchema = z.object({
   bankName: z.string().min(1, "Banco requerido"),
   bankAccountType: z.enum(["cuenta_corriente", "cuenta_vista", "cuenta_rut", "cuenta_ahorro"]),
   bankAccountNumber: z.string().min(1, "Número de cuenta requerido"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
+  confirmPassword: z.string().min(1, "Confirma tu contraseña"),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
 });
 
 type EmpresaData = z.infer<typeof empresaSchema>;
@@ -107,6 +112,7 @@ export default function OnboardingPage() {
         bankName: data.bankName,
         bankAccountType: data.bankAccountType,
         bankAccountNumber: data.bankAccountNumber,
+        password: data.password,
       }),
     });
     const json = await res.json();
@@ -236,6 +242,23 @@ export default function OnboardingPage() {
                   {trabajadorForm.formState.errors.bankAccountNumber && (
                     <p className="text-sm text-destructive">{trabajadorForm.formState.errors.bankAccountNumber.message}</p>
                   )}
+                </div>
+                <div className="border-t border-border pt-4 space-y-4">
+                  <p className="text-xs text-muted-foreground">Crea una contraseña para poder iniciar sesión la próxima vez.</p>
+                  <div className="space-y-2">
+                    <Label>Contraseña</Label>
+                    <Input type="password" placeholder="Mínimo 6 caracteres" {...trabajadorForm.register("password")} />
+                    {trabajadorForm.formState.errors.password && (
+                      <p className="text-sm text-destructive">{trabajadorForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Confirmar contraseña</Label>
+                    <Input type="password" placeholder="Repite tu contraseña" {...trabajadorForm.register("confirmPassword")} />
+                    {trabajadorForm.formState.errors.confirmPassword && (
+                      <p className="text-sm text-destructive">{trabajadorForm.formState.errors.confirmPassword.message}</p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
               <CardFooter>
