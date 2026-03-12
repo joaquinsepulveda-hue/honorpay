@@ -37,7 +37,7 @@ export default function EventoDetailPage({ params }: { params: Promise<{ id: str
   const [approveOpen, setApproveOpen] = useState(false);
   const [approving, setApproving] = useState(false);
 
-  const { data: evento, isLoading: loadingEvento, error: eventoError } = useEvento(id);
+  const { data: evento, isLoading: loadingEvento } = useEvento(id);
   const { data: workers, isLoading: loadingWorkers } = useEventWorkers(id);
 
   const totalGross = workers?.filter(w => w.status !== "rechazado").reduce((s, w) => s + w.gross_amount, 0) ?? 0;
@@ -73,14 +73,7 @@ export default function EventoDetailPage({ params }: { params: Promise<{ id: str
   }
 
   if (!evento) {
-    return (
-      <div className="space-y-1">
-        <p className="text-muted-foreground">Evento no encontrado.</p>
-        {eventoError && (
-          <p className="text-xs text-destructive font-mono">{JSON.stringify(eventoError)}</p>
-        )}
-      </div>
-    );
+    return <p className="text-muted-foreground">Evento no encontrado.</p>;
   }
 
   return (

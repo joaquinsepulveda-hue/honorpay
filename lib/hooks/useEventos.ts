@@ -31,10 +31,7 @@ export function useEvento(id: string) {
         .select("*")
         .eq("id", id)
         .single();
-      if (error) {
-        console.error("[useEvento] error:", error);
-        throw error;
-      }
+      if (error) throw error;
       return data as Event;
     },
     enabled: !!id,
