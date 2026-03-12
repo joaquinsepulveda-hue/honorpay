@@ -6,9 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Users, Mail } from "lucide-react";
-import { useTrabajadores } from "@/lib/hooks/useTrabajadores";
+import { useTrabajadores, useInvitaciones } from "@/lib/hooks/useTrabajadores";
 import type { Profile } from "@/lib/types";
 import { getInitials } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Clock } from "lucide-react";
 
 const bankAccountLabels: Record<string, string> = {
   cuenta_corriente: "Cta. Corriente",
@@ -19,6 +21,7 @@ const bankAccountLabels: Record<string, string> = {
 
 export default function TrabajadoresPage() {
   const { data: trabajadores, isLoading } = useTrabajadores();
+  const { data: invitaciones } = useInvitaciones();
 
   return (
     <div>
@@ -81,6 +84,26 @@ export default function TrabajadoresPage() {
           <Users className="h-12 w-12 mx-auto mb-4 opacity-30" />
           <p className="font-medium">No hay trabajadores aún</p>
           <p className="text-sm mt-1">Los trabajadores pueden registrarse directamente en HonorPay</p>
+        </div>
+      )}
+
+      {/* Pending invitations */}
+      {invitaciones && invitaciones.filter((i: { status: string }) => i.status === "pending").length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">Invitaciones pendientes</h2>
+          <div className="space-y-2">
+            {invitaciones
+              .filter((i: { status: string }) => i.status === "pending")
+              .map((inv: { id: string; email: string; invited_at: string }) => (
+                <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{inv.email}</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Pendiente</Badge>
+                </div>
+              ))}
+          </div>
         </div>
       )}
     </div>

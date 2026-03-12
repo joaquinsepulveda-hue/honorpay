@@ -36,3 +36,18 @@ export function useTrabajador(id: string) {
     enabled: !!id,
   });
 }
+
+export function useInvitaciones() {
+  return useQuery({
+    queryKey: ["invitaciones"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("worker_invitations")
+        .select("*")
+        .order("invited_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}

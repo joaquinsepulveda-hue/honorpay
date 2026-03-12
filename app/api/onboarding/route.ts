@@ -63,6 +63,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Mark invitation as accepted if exists
+    await service
+      .from("worker_invitations")
+      .update({ status: "accepted", worker_id: user.id, accepted_at: new Date().toISOString() })
+      .eq("email", user.email ?? "")
+      .eq("status", "pending");
+
     return NextResponse.json({ success: true, redirect: "/worker" });
   }
 
