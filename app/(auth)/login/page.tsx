@@ -36,12 +36,11 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError("Credenciales incorrectas. Intenta de nuevo.");
+      setError(error.message);
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    window.location.href = "/dashboard";
   }
 
   return (
