@@ -69,7 +69,8 @@ export default function RegisterPage() {
         setEmailSent(true);
       }
     } catch (err) {
-      setError("Error inesperado. Intenta de nuevo.");
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
       console.error(err);
     }
   }
