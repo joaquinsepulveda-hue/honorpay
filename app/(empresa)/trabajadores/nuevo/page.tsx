@@ -43,51 +43,58 @@ export default function InvitarTrabajadorPage() {
 
   if (sent) {
     return (
-      <div>
-        <PageHeader title="Invitar trabajador" description="El trabajador recibirá un email para unirse" />
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center space-y-3">
-            <CheckCircle className="h-10 w-10 text-primary mx-auto" />
-            <p className="font-medium">Invitación enviada</p>
-            <p className="text-sm text-muted-foreground">
-              Se envió un email a <span className="font-medium text-foreground">{sentEmail}</span> con el link para registrarse.
-            </p>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setSent(false)}>
-                Invitar otro
-              </Button>
-              <Button className="flex-1" onClick={() => router.push("/trabajadores")}>
-                Ver trabajadores
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="max-w-lg mx-auto mt-16 text-center space-y-6">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <CheckCircle className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold">Invitación enviada</h2>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Se envió un email a{" "}
+            <span className="font-medium text-foreground">{sentEmail}</span>{" "}
+            con el link para registrarse en HonorPay.
+          </p>
+        </div>
+        <div className="flex gap-3 justify-center">
+          <Button variant="outline" onClick={() => setSent(false)}>
+            Invitar otro
+          </Button>
+          <Button onClick={() => router.push("/trabajadores")}>
+            Ver trabajadores
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Invitar trabajador"
-        description="El trabajador recibirá un email para registrarse y completar sus datos"
-        actions={
-          <Link href="/trabajadores">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver
-            </Button>
-          </Link>
-        }
-      />
-      <Card className="max-w-md">
+    <div className="max-w-lg mx-auto">
+      <div className="mb-6">
+        <Link href="/trabajadores">
+          <Button variant="ghost" size="sm" className="text-muted-foreground -ml-2">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver a trabajadores
+          </Button>
+        </Link>
+      </div>
+
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Mail className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Invitar trabajador</h1>
+          <p className="text-sm text-muted-foreground">
+            El trabajador recibirá un email para registrarse y completar sus datos
+          </p>
+        </div>
+      </div>
+
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Mail className="h-4 w-4" />
-            Enviar invitación
-          </CardTitle>
+          <CardTitle className="text-base">Enviar invitación por email</CardTitle>
           <CardDescription>
-            El trabajador recibirá un email con un link para crear su cuenta e ingresar sus datos bancarios.
+            El trabajador recibirá un link para crear su cuenta e ingresar sus datos bancarios. Solo necesitas su correo.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -98,13 +105,14 @@ export default function InvitarTrabajadorPage() {
                 id="email"
                 type="email"
                 placeholder="trabajador@email.cl"
+                className="h-11"
                 {...register("email")}
               />
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Enviar invitación
             </Button>

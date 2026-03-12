@@ -32,14 +32,15 @@ export async function POST(request: NextRequest) {
     if (existing.status === "accepted") {
       return NextResponse.json({ error: "Este trabajador ya está en tu equipo" }, { status: 409 });
     }
-    return NextResponse.json({ error: "Ya enviaste una invitación a este email" }, { status: 409 });
+    // Pending: delete old record and re-invite with a fresh token
+    await service.from("worker_invitations").delete().eq("id", existing.id);
   }
 
-  // Send invite via Supabase Auth
-  const origin = request.headers.get("origin") ?? "https://honorpay.vercel.app";
+  // Always use production URL so the redirectTo is whitelisted in Supabase
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://honorpay.vercel.app";
   const { error: inviteError } = await service.auth.admin.inviteUserByEmail(email, {
     data: { role: "trabajador" },
-    redirectTo: `${origin}/api/auth/callback?next=/onboarding`,
+    redirectTo: `${appUrl}/api/auth/callback?next=/onboarding`,
   });
 
   if (inviteError) {
