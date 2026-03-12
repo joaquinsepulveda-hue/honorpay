@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,9 +20,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const [magicSent, setMagicSent] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -40,7 +40,47 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = "/dashboard";
+    // Redirect based on role
+    const res = await fetch("/api/me");
+    const json = res.ok ? await res.json() : null;
+    const role = json?.profile?.role;
+    window.location.href = role === "trabajador" ? "/worker" : "/dashboard";
+  }
+
+  async function handleMagicLink() {
+    const email = getValues("email");
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      setError("Ingresa tu email primero");
+      return;
+    }
+    setError(null);
+    setMagicLoading(true);
+    const supabase = createClient();
+    const appUrl = window.location.origin;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${appUrl}/api/auth/callback?next=/worker` },
+    });
+    setMagicLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setMagicSent(true);
+  }
+
+  if (magicSent) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Revisa tu email</CardTitle>
+          <CardDescription>Te enviamos un link para ingresar sin contraseña.</CardDescription>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Si no llega en unos minutos, revisa la carpeta de spam.
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -81,6 +121,16 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Ingresar
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full text-sm text-muted-foreground"
+            disabled={magicLoading}
+            onClick={handleMagicLink}
+          >
+            {magicLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Ingresar sin contraseña (link por email)
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             ¿No tienes cuenta?{" "}
